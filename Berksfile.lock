@@ -5,6 +5,7 @@ DEPENDENCIES
   ark
   bluepill
   build-essential
+  imagemagick
   mysql
   newrelic
     path: newrelic_cookbook
@@ -36,6 +37,7 @@ GRAPH
     mingw (>= 1.1)
     seven_zip (>= 0.0.0)
   compat_resource (12.19.0)
+  imagemagick (0.2.3)
   mingw (2.0.0)
     seven_zip (>= 0.0.0)
   mysql (8.3.1)
