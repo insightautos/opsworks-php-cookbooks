@@ -15,7 +15,9 @@ end
 
 # set apache2 hosts
 web_app "#{app['name']}" do
-  server_name "api.#{app['shortname']}.com"
-  docroot "/var/app/public"
-  template "webapp.#{app['shortname']}.conf.erb"
+  server_name "manage.dealr.cloud"
+  server_aliases ["demo.dealr.cloud"]
+  docroot "/var/app"
+  template "webapp.conf.erb"
+  environment app['environment']
 end

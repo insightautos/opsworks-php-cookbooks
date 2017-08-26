@@ -1,10 +1,16 @@
 include_recipe "build-essential"
 include_recipe "apache2::default"
 include_recipe "apache2::mod_rewrite"
+include_recipe "apache2::mod_access_compat"
+include_recipe "apache2::mod_proxy"
+include_recipe "apache2::mod_proxy_http"
+#include_recipe "apache2::mod_php"
 include_recipe "yum"
 include_recipe "phpapp::setup_php5"
 include_recipe "phpapp::setup_ghostscript"
+include_recipe "phpapp::php_mcrypt_enable"
 include_recipe "imagemagick"
+include_recipe 'apt'
 
 package "git"
 package "python-setuptools"
@@ -28,10 +34,6 @@ execute "sed -i 's/opcache.fast_shutdown=1/opcache.fast_shutdown=0/g' /etc/php-5
 end
 
 execute "curl -sS https://getcomposer.org/installer | php" do
-    ignore_failure true
-end
-
-execute "composer global require 'laravel/lumen-installer'" do
     ignore_failure true
 end
 
