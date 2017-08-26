@@ -1,40 +1,58 @@
 include_recipe "phpapp::setup_php5"
 
 app = search(:aws_opsworks_app).first
-app_path = "/var/app"
 
-# set apache2 hosts
+app_path = "/var/app/#{app['shortname']}"
+
 web_app "#{app['name']}" do
   server_name "manage.dealr.cloud"
   server_aliases ["demo.dealr.cloud"]
-  docroot "/var/app"
+  docroot "#{app_path}/current"
   template "webapp.conf.erb"
   environment app['environment']
 end
 
-# deploy git repo from opsworks app
-application app_path do
-  git app_path do
+directory "#{app_path}" do
+    action :create
+    owner 'root'
+    recursive true
+end
+
+file "#{app_path}/git_key" do
+    owner 'root'
+    mode "0600"
+    content app['app_source']['ssh_key']
+end
+file "#{app_path}/git_key.sh" do
+    owner 'root'
+    mode "0755"
+    content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
+end
+
+deploy "#{app_path}" do
     repository app['app_source']['url']
-    deploy_key app['app_source']['ssh_key']
     revision app['app_source']['revision']
-  end
-end
+    ssh_wrapper "#{app_path}/git_key.sh"
 
+    symlink_before_migrate.clear
+    create_dirs_before_symlink.clear
+    purge_before_symlink.clear
+    symlinks.clear
+    before_migrate do
+        Chef::Log.info("Installing composer")
+        current_release = release_path
+        script "install_composer" do
+            interpreter "bash"
+            user "root"
+            cwd "#{current_release}"
+            code <<-EOH
+            composer install --prefer-source --optimize-autoloader  --no-interaction
+            EOH
+            action :run
+        end
+    end
 
-# install composer
-script "install_composer" do
-  interpreter "bash"
-  user "root"
-  cwd "/var/app"
-  code <<-EOH
-  composer install --prefer-source --optimize-autoloader  --no-interaction
-  EOH
-end
-
-directory '/var/app' do
-  owner 'root'
-  group 'root'
-  mode '0755'
-  action :create
+    after_restart do
+        Chef::Log.info("Finishing app install")
+    end
 end

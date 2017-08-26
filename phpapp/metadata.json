@@ -38,7 +38,8 @@
     "phpapp::setup_shared": "Setup a PHP application environment",
     "phpapp::setup_vagrant": "Setup a PHP application vagrant environment",
     "phpapp::setup_opsworks": "Setup a PHP application EC2 environment",
-    "phpapp::deploy_opsworks": "Deploys a PHP application"
+    "phpapp::deploy_opsworks": "Deploys a PHP application",
+    "phpapp::rollback_opsworks": "Rollback a PHP application"
   },
   "version": "0.8.0",
   "source_url": "",

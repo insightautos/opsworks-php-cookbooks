@@ -13,11 +13,11 @@ template "/etc/php.d/app.ini" do
   mode 0644
 end
 
-# set apache2 hosts
-web_app "#{app['name']}" do
-  server_name "manage.dealr.cloud"
-  server_aliases ["demo.dealr.cloud"]
-  docroot "/var/app"
-  template "webapp.conf.erb"
-  environment app['environment']
-end
+## set apache2 hosts
+#web_app "#{app['name']}" do
+#  server_name "manage.dealr.cloud"
+#  server_aliases ["demo.dealr.cloud"]
+#  docroot "/var/app"
+#  template "webapp.conf.erb"
+#  environment app['environment']
+#end
