@@ -41,14 +41,15 @@ deploy "#{app_path}" do
     before_migrate do
         Chef::Log.info("Installing composer")
         current_release = release_path
-        script "install_composer" do
-            interpreter "bash"
+        execute "composer install --prefer-dist --optimize-autoloader  --no-interaction --no-progress" do
+            live_stream true
+            action :run
             user "root"
             cwd "#{current_release}"
-            code <<-EOH
-            composer install --prefer-source --optimize-autoloader  --no-interaction
-            EOH
-            action :run
+        end
+
+        service "httpd" do
+          action :restart
         end
     end
 
