@@ -1,4 +1,9 @@
-include_recipe "phpapp::setup_php5"
+execute "a2dismod php7.1" do
+    ignore_failure false
+    user "root"
+end
+
+include_recipe "phpapp::setup_php71"
 
 app = search(:aws_opsworks_app).first
 
@@ -28,7 +33,10 @@ file "#{app_path}/git_key.sh" do
     mode "0755"
     content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
 end
-
+execute "a2dismod mpm_event" do
+    ignore_failure false
+    user "root"
+end
 deploy "#{app_path}" do
     repository app['app_source']['url']
     revision app['app_source']['revision']
@@ -48,9 +56,14 @@ deploy "#{app_path}" do
             cwd "#{current_release}"
         end
 
-        service "httpd" do
+        execute "a2enmod php7.1" do
+            ignore_failure false
+            user "root"
+        end
+        service "apache2" do
           action :restart
         end
+
     end
 
     after_restart do

@@ -1,12 +1,12 @@
 node.set['apache']['version'] = '2.4'
-node.set['apache']['package'] = 'httpd24'
+node.set['apache']['package'] = 'apache2'
 
 include_recipe "phpapp::setup_shared"
 
 app = search(:aws_opsworks_app).first
 
 # set any php.ini settings needed
-template "/etc/php.d/app.ini" do
+template "/etc/php/7.1/apache2/conf.d/app.ini" do
   source "php.conf.erb"
   owner "root"
   group "root"
