@@ -9,6 +9,7 @@ DEPENDENCIES
   mysql
   newrelic
     path: newrelic_cookbook
+  nodejs
   openssl
   php
   phpapp
@@ -18,7 +19,7 @@ DEPENDENCIES
   yum
 
 GRAPH
-  apache2 (5.0.0)
+  apache2 (5.0.1)
   application (5.2.0)
     poise (~> 2.4)
     poise-service (~> 1.0)
@@ -26,7 +27,7 @@ GRAPH
     application (~> 5.0)
     poise (~> 2.0)
     poise-git (~> 1.0)
-  apt (6.1.3)
+  apt (6.1.4)
   ark (3.1.0)
     build-essential (>= 0.0.0)
     seven_zip (>= 0.0.0)
@@ -48,6 +49,10 @@ GRAPH
     ohai (>= 1.1.4)
     runit (>= 0.0.0)
     yum (>= 0.0.0)
+  nodejs (4.0.0)
+    ark (>= 2.0.2)
+    build-essential (>= 0.0.0)
+    compat_resource (>= 12.16)
   ohai (5.2.0)
   openssl (7.1.0)
   packagecloud (0.3.0)
@@ -61,6 +66,7 @@ GRAPH
     apt (>= 0.0.0)
     build-essential (>= 0.0.0)
     imagemagick (>= 0.0.0)
+    nodejs (>= 0.0.0)
     php (>= 0.0.0)
     phpmyadmin (>= 0.0.0)
     yum (>= 0.0.0)

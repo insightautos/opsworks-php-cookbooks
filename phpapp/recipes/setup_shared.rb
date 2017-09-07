@@ -11,7 +11,17 @@ include_recipe "phpapp::setup_ghostscript"
 include_recipe "phpapp::php_mcrypt_enable"
 include_recipe "imagemagick::devel"
 include_recipe "imagemagick"
+#include_recipe "phpapp::setup_v8"
 include_recipe 'apt'
+include_recipe "nodejs"
+
+php_pear_channel 'pear.php.net' do
+  action :update
+end
+
+php_pear_channel 'pecl.php.net' do
+  action :update
+end
 
 php_pear 'imagick' do
   action :install
@@ -22,11 +32,11 @@ package "python-setuptools"
 package "ntp"
 package "ntpdate"
 package "php56-gd"
-package "libv8"
 
-php_pear 'v8js-0.6.4' do
-  action :install
-end
+#php_pear 'v8js' do
+#  version "0.6.4"
+#  action :install
+#end
 
 execute "service ntpd restart" do
     ignore_failure true

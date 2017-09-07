@@ -15,7 +15,8 @@
     "php": ">= 0.0.0",
     "phpmyadmin": ">= 0.0.0",
     "application_git": ">= 0.0.0",
-    "imagemagick": ">= 0.0.0"
+    "imagemagick": ">= 0.0.0",
+    "nodejs": ">= 0.0.0"
   },
   "recommendations": {
   },
@@ -39,7 +40,8 @@
     "phpapp::setup_vagrant": "Setup a PHP application vagrant environment",
     "phpapp::setup_opsworks": "Setup a PHP application EC2 environment",
     "phpapp::deploy_opsworks": "Deploys a PHP application",
-    "phpapp::rollback_opsworks": "Rollback a PHP application"
+    "phpapp::rollback_opsworks": "Rollback a PHP application",
+    "phpapp::setup_v8": "Setup Google's V8 Engine"
   },
   "version": "0.8.0",
   "source_url": "",
