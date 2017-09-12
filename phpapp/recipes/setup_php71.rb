@@ -26,6 +26,10 @@ execute "apt-get update" do
     ignore_failure false
     user "root"
 end
+execute "a2dismod php7.1" do
+    ignore_failure true
+    user "root"
+end
 include_recipe "build-essential"
 include_recipe "apache2::default"
 include_recipe "apache2::mod_rewrite"
