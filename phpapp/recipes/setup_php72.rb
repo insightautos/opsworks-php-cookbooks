@@ -1,7 +1,7 @@
 node.set['apache']['version'] = '2.4'
 node.set['apache']['package'] = 'apache2'
-node.set['php']['packages'] = ['libapache2-mod-php7.1', 'libapache2-mod-php','php7.1-dev','php7.1-fpm', 'php7.1-common', 'php7.1-cli', 'php7.1-soap', 'php7.1-xml', 'php7.1-xmlrpc', 'php7.1-mysqlnd', 'php7.1-opcache', 'php7.1-pdo', 'php7.1-imap', 'php7.1-mbstring', 'php7.1-intl', 'php7.1-mcrypt', 'php7.1-gd','php7.1','php-pear','php7.1-curl']
-node.set['php']['conf_dir'] = "/etc/php/7.1"
+node.set['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev','php7.2-fpm', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
+node.set['php']['conf_dir'] = "/etc/php/7.2"
     # add the EPEL repo
     #yum_repository 'epel' do
     #    description 'Extra Packages for Enterprise Linux'
@@ -18,7 +18,7 @@ node.set['php']['conf_dir'] = "/etc/php/7.1"
     #    action :create
     #end
 
-execute "add-apt-repository ppa:ondrej/php" do
+execute "LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php" do
     ignore_failure false
     user "root"
 end
@@ -26,11 +26,28 @@ execute "apt-get update" do
     ignore_failure false
     user "root"
 end
-execute "a2dismod php7.1" do
-    ignore_failure true
-    user "root"
+
+bash 'disable_php7.2' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    if hash a2dismod 2>/dev/null; then
+        a2dismod php7.2
+        a2dismod mpm_event
+    fi
+    EOH
 end
+
 include_recipe "build-essential"
 include_recipe "apache2::default"
 include_recipe "apache2::mod_rewrite"
+include_recipe "apache2::mod_access_compat"
+include_recipe "apache2::mod_proxy"
+include_recipe "apache2::mod_proxy_http"
 include_recipe "php"
+
+
+execute "a2enmod php7.2" do
+    ignore_failure true
+    user "root"
+end

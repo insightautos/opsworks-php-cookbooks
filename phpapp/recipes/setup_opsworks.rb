@@ -6,7 +6,7 @@ include_recipe "phpapp::setup_shared"
 app = search(:aws_opsworks_app).first
 
 # set any php.ini settings needed
-template "/etc/php/7.1/apache2/conf.d/app.ini" do
+template "/etc/php/7.2/apache2/conf.d/app.ini" do
   source "php.conf.erb"
   owner "root"
   group "root"

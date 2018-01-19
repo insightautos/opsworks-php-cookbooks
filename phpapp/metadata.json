@@ -41,7 +41,7 @@
     "phpapp::setup_opsworks": "Setup a PHP application EC2 environment",
     "phpapp::deploy_opsworks": "Deploys a PHP application",
     "phpapp::rollback_opsworks": "Rollback a PHP application",
-    "phpapp::setup_php71": "Setup php 7.1 environment"
+    "phpapp::setup_php72": "Setup php 7.2 environment"
   },
   "version": "0.8.0",
   "source_url": "",

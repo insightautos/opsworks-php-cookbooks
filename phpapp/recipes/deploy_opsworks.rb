@@ -1,20 +1,28 @@
-execute "a2dismod php7.1" do
-    ignore_failure false
-    user "root"
-end
-
-include_recipe "phpapp::setup_php71"
 
 app = search(:aws_opsworks_app).first
 
 app_path = "/var/app/#{app['shortname']}"
 
+bash 'disable_php7.2' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    if hash a2dismod 2>/dev/null; then
+        a2dismod php7.2
+        a2dismod mpm_event
+    fi
+    EOH
+end
 web_app "#{app['name']}" do
   server_name "manage.dealr.cloud"
   server_aliases ["demo.dealr.cloud"]
   docroot "#{app_path}/current"
   template "webapp.conf.erb"
   environment app['environment']
+end
+execute "a2enmod php7.2" do
+    ignore_failure true
+    user "root"
 end
 
 directory "#{app_path}" do
@@ -33,10 +41,6 @@ file "#{app_path}/git_key.sh" do
     mode "0755"
     content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
 end
-execute "a2dismod mpm_event" do
-    ignore_failure false
-    user "root"
-end
 deploy "#{app_path}" do
     repository app['app_source']['url']
     revision app['app_source']['revision']
@@ -46,6 +50,7 @@ deploy "#{app_path}" do
     create_dirs_before_symlink.clear
     purge_before_symlink.clear
     symlinks.clear
+    restart_command "touch /var"
     before_migrate do
         Chef::Log.info("Installing composer")
         current_release = release_path
@@ -55,18 +60,20 @@ deploy "#{app_path}" do
             user "root"
             cwd "#{current_release}"
         end
+        execute "npm install" do
+            live_stream true
+            action :run
+            user "root"
+            cwd "#{current_release}"
+        end
 
-        execute "a2enmod php7.1" do
+        execute "a2dismod mpm_event | service apache2 restart" do
             ignore_failure false
             user "root"
         end
-        service "apache2" do
-          action :restart
-        end
-
     end
 
     after_restart do
-        Chef::Log.info("Finishing app install")
+        Chef::Log.info("Finished app install")
     end
 end
