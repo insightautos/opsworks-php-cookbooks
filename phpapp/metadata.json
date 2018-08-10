@@ -16,7 +16,9 @@
     "phpmyadmin": ">= 0.0.0",
     "application_git": ">= 0.0.0",
     "imagemagick": ">= 0.0.0",
-    "nodejs": ">= 0.0.0"
+    "nodejs": ">= 0.0.0",
+    "gearman": ">= 0.0.0",
+    "supervisor": ">= 0.0.0"
   },
   "recommendations": {
   },

@@ -2,6 +2,8 @@ source "https://supermarket.getchef.com"
 source 'https://supermarket.chef.io'
 
 cookbook 'apt'
+cookbook 'supervisor'
+cookbook 'gearman'
 cookbook 'yum'
 cookbook 'bluepill'
 cookbook 'ark'

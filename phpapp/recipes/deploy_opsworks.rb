@@ -31,6 +31,36 @@ directory "#{app_path}" do
     recursive true
 end
 
+bash 'install_gearman' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+
+    gearmaninstalled="$(ls /etc/php/7.2/mods-available | grep -i gearman)"
+
+    if [ -z "gearmaninstalled" ]
+    then
+        cd /tmp/
+        wget https://github.com/wcgallego/pecl-gearman/archive/gearman-2.0.5.zip
+        unzip gearman-2.0.5.zip
+        cd pecl-gearman-master
+        phpize
+        ./configure
+        make
+        make install
+        echo "extension=gearman.so" | tee /etc/php/7.2/mods-available/gearman.ini
+        phpenmod -v ALL -s ALL gearman
+    fi
+
+    EOH
+end
+
+supervisorEnvironmentVars = {}
+
+app['environment'].each do |k,v|
+    supervisorEnvironmentVars[k] = v.gsub("%","%%")
+end
+
 file "#{app_path}/git_key" do
     owner 'root'
     mode "0600"
@@ -41,6 +71,9 @@ file "#{app_path}/git_key.sh" do
     mode "0755"
     content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
 end
+
+include_recipe "gearman::default"
+
 deploy "#{app_path}" do
     repository app['app_source']['url']
     revision app['app_source']['revision']
@@ -67,6 +100,32 @@ deploy "#{app_path}" do
             cwd "#{current_release}"
         end
 
+        supervisor_service "gearman" do
+            action :disable
+        end
+
+        supervisor_service "gearman" do
+            action :enable
+            process_name "gearman"
+            command "gearmand --queue-type=mysql --mysql-host=#{app['environment']['DATABASE_SERVER_ADDRESS']} --mysql-port=3306 --mysql-user=#{app['environment']['DATABASE_USER']} --mysql-password=#{app['environment']['DATABASE_PASSWORD']} --mysql-db=gearman --mysql-table=gearman_queue"
+            autostart true
+            autorestart true
+            numprocs 1
+            environment supervisorEnvironmentVars
+        end
+
+        supervisor_service "gearman_process" do
+            action :disable
+        end
+        supervisor_service "gearman_process" do
+            action :enable
+            process_name "gearman-worker-%(process_num)s"
+            command "php #{current_release}/api/gearman/worker.php"
+            autostart true
+            autorestart true
+            numprocs 10
+            environment supervisorEnvironmentVars
+        end
         execute "a2dismod mpm_event | service apache2 restart" do
             ignore_failure false
             user "root"
