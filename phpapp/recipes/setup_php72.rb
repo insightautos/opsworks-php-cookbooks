@@ -1,3 +1,4 @@
+node.set['apache']['listen'] = ['*:8080']
 node.set['apache']['version'] = '2.4'
 node.set['apache']['package'] = 'apache2'
 node.set['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
