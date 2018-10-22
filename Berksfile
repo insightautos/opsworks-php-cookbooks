@@ -3,7 +3,7 @@ source 'https://supermarket.chef.io'
 
 cookbook 'apt'
 cookbook 'supervisor'
-cookbook 'gearman'
+cookbook 'gearman', '~> 0.0.1'
 cookbook 'yum'
 cookbook 'bluepill'
 cookbook 'ark'

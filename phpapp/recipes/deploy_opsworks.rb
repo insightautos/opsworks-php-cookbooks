@@ -14,12 +14,10 @@ apps.each do |app|
     if app['environment']['LANGUAGE'] == "nodejs"
         Chef::Log.info("NodeJS language detected")
 
-
         ports = app['environment']['NODE_PORTS'].split(",")
 
-        current_port = File.read("#{app_path}/current_port");
-
-        if current_port
+        if File.exist?("#{app_path}/current_port")
+            current_port = File.read("#{app_path}/current_port");
             ports.delete(current_port)
         end
 
@@ -28,7 +26,7 @@ apps.each do |app|
         file "#{app_path}/current_port" do
             owner 'root'
             mode "0755"
-            content port_to_use
+            content "#{port_to_use}"
         end
 
         Chef::Log.info("NodeJS app is using port #{current_port} right now. New deploy will use port #{port_to_use}.")
@@ -42,13 +40,10 @@ apps.each do |app|
 
         execute "nxensite #{app['shortname']}" do
           command "/usr/sbin/nxensite #{app['shortname']}"
-          not_if do
-            ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/#{app['shortname']}") ||
-              ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/000-#{app['shortname']}")
-          endb
+          not_if {::File.symlink?("#{node['nginx']['dir']}/sites-enabled/#{app['shortname']}") || ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/000-#{app['shortname']}")}
         end
 
-        app['enviroment']['NODE_PORT'] = port_to_use
+        app['environment']['NODE_PORT'] = port_to_use
 
     else
         bash 'disable_php7.2' do
@@ -111,10 +106,7 @@ apps.each do |app|
 
         execute "nxensite #{app['shortname']}" do
           command "/usr/sbin/nxensite #{app['shortname']}"
-          not_if do
-            ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/#{app['shortname']}") ||
-              ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/000-#{app['shortname']}")
-          endb
+          not_if {::File.symlink?("#{node['nginx']['dir']}/sites-enabled/#{app['shortname']}") || ::File.symlink?("#{node['nginx']['dir']}/sites-enabled/000-#{app['shortname']}")}
         end
 
         execute "a2enmod php7.2" do
@@ -154,7 +146,7 @@ apps.each do |app|
             current_release = release_path
 
             execute "composer install --prefer-dist --optimize-autoloader  --no-interaction --no-progress" do
-                only_if {::File.exists?("#{current_release}/composer.json")}
+                only_if {::File.exist?("#{current_release}/composer.json")}
                 live_stream true
                 action :run
                 user "root"
@@ -162,7 +154,7 @@ apps.each do |app|
             end
 
             execute "npm install --production" do
-                only_if {::File.exists?("#{current_release}/package.json")}
+                only_if {::File.exist?("#{current_release}/package.json")}
                 live_stream true
                 action :run
                 user "root"
@@ -206,7 +198,7 @@ apps.each do |app|
                     variables ({ :environment => app['environment'] })
                 end
 
-                execute "pm2 start app.js -i max -n app-#{port_to_use}" do
+                execute "pm2 start #{current_release}/app.js -i max -n app-#{port_to_use}" do
                     ignore_failure false
                     action :run
                     user "root"
@@ -218,10 +210,12 @@ apps.each do |app|
                     user "root"
                 end
 
-                execute "pm2 stop app-#{current_port}" do
-                    ignore_failure false
-                    action :run
-                    user "root"
+                if current_port
+                    execute "pm2 stop app-#{current_port} | pm2 delete app-#{current_port}" do
+                        ignore_failure true
+                        action :run
+                        user "root"
+                    end
                 end
             else
                 execute "a2dismod mpm_event | service apache2 start | service apache2 graceful" do

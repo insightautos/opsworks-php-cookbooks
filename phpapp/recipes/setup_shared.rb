@@ -6,15 +6,19 @@ include_recipe "phpapp::php_mcrypt_enable"
 include_recipe "imagemagick::devel"
 include_recipe "imagemagick"
 include_recipe 'apt::default'
+
+node.default['nodejs']['install_method'] = 'binary'
 include_recipe "nodejs"
 include_recipe "gearman::default"
 include_recipe "supervisor::default"
 
-node.set['nginx']['port'] = 80
+node.default['nginx']['port'] = 80
+node.default['nginx']['worker_shutdown_timeout'] = 10
+
 include_recipe "nginx::default"
 
-node.set['apt']['unattended_upgrades']['enable'] = true
-node.set['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:${distro_codename}-security"]
+node.default['apt']['unattended_upgrades']['enable'] = true
+node.default['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:${distro_codename}-security"]
 
 include_recipe "apt::unattended-upgrades"
 

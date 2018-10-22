@@ -1,5 +1,5 @@
-node.set['apache']['version'] = '2.4'
-node.set['apache']['package'] = 'apache2'
+node.default['apache']['version'] = '2.4'
+node.default['apache']['package'] = 'apache2'
 
 include_recipe "phpapp::setup_shared"
 

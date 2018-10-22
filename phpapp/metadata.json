@@ -18,7 +18,7 @@
     "application_git": ">= 0.0.0",
     "imagemagick": ">= 0.0.0",
     "nodejs": ">= 0.0.0",
-    "gearman": ">= 0.0.0",
+    "gearman": "~> 0.0.1",
     "supervisor": ">= 0.0.0"
   },
   "recommendations": {
