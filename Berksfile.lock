@@ -1,4 +1,6 @@
 DEPENDENCIES
+  alb_support
+    path: alb_support
   apache2
   application_git
   apt
@@ -22,6 +24,7 @@ DEPENDENCIES
   yum
 
 GRAPH
+  alb_support (0.0.0)
   apache2 (5.2.1)
   application (5.2.0)
     poise (~> 2.4)

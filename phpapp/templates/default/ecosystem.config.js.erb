@@ -1,0 +1,13 @@
+module.exports = {
+    apps: [{
+        name: "<%= @name %>",
+        script: "./app.js",
+        cwd: "<%= @path %>",
+        error: "<%= @errorPath %>",
+        exec_mode: "cluster_mode",
+        instances: "max",
+        wait_ready: true,
+        listen_timeout: 5000,
+        kill_timeout : 10000,
+    }]
+}

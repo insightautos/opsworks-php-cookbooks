@@ -1,4 +1,6 @@
 apps = search("aws_opsworks_app","deploy:true")
+instance = search("aws_opsworks_instance", "self:true").first
+require 'chef/mixin/shell_out'
 
 apps.each do |app|
     Chef::Log.info("Starting deploy for #{app['name']}")
@@ -11,6 +13,28 @@ apps.each do |app|
         recursive true
     end
 
+    file "#{app_path}/git_key" do
+        owner 'root'
+        mode "0600"
+        content app['app_source']['ssh_key']
+    end
+    file "#{app_path}/git_key.sh" do
+        owner 'root'
+        mode "0755"
+        content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
+    end
+
+    git_command = [
+        "sudo ssh-agent bash -c 'ssh-add #{app_path}/git_key &>/dev/null; git ls-remote #{app['app_source']['url']}",
+        app['app_source']['revision'] ? " -h #app['app_source']['revision']" : "",
+        "' | head -1 | cut -f 1"
+      ].compact.join("");
+    git_sha = shell_out(git_command).stdout
+
+    app['environment']['GIT_SHA'] = git_sha
+    Chef::Log.info("Git Command #{git_command}")
+    Chef::Log.info("Git SHA Key #{git_sha}")
+
     if app['environment']['LANGUAGE'] == "nodejs"
         Chef::Log.info("NodeJS language detected")
 
@@ -18,10 +42,12 @@ apps.each do |app|
 
         if File.exist?("#{app_path}/current_port")
             current_port = File.read("#{app_path}/current_port");
-            ports.delete(current_port)
+            port_to_use = current_port
+            # ports.delete(current_port)
+        else
+            port_to_use = ports.sample
         end
 
-        port_to_use = ports.sample
 
         file "#{app_path}/current_port" do
             owner 'root'
@@ -37,6 +63,12 @@ apps.each do |app|
             action :create
             variables ({ :environment => app['environment'], :domains => app['domains'], :port => port_to_use})
         end
+        template 'ecosystem.config.js' do
+            source 'ecosystem.config.js.erb'
+            path "#{app_path}/ecosystem.config.js"
+            action :create
+            variables ({ :name => app['shortname'], :path => "#{app_path}/current", :errorPath => "#{app_path}/logs/error.log"})
+        end
 
         execute "nxensite #{app['shortname']}" do
           command "/usr/sbin/nxensite #{app['shortname']}"
@@ -44,7 +76,6 @@ apps.each do |app|
         end
 
         app['environment']['NODE_PORT'] = port_to_use
-
     else
         bash 'disable_php7.2' do
           interpreter "bash"
@@ -119,17 +150,6 @@ apps.each do |app|
         include_recipe "gearman::default"
     end
 
-    file "#{app_path}/git_key" do
-        owner 'root'
-        mode "0600"
-        content app['app_source']['ssh_key']
-    end
-    file "#{app_path}/git_key.sh" do
-        owner 'root'
-        mode "0755"
-        content "#!/bin/sh\nexec /usr/bin/ssh -o 'StrictHostKeyChecking=no' -i #{app_path}/git_key \"$@\""
-    end
-
 
     deploy "#{app_path}" do
         repository app['app_source']['url']
@@ -198,11 +218,12 @@ apps.each do |app|
                     variables ({ :environment => app['environment'] })
                 end
 
-                execute "pm2 start #{current_release}/app.js -i max -n app-#{port_to_use}" do
+                execute "pm2 link #{app['environment']['PM2_SECRET_KEY']} #{app['environment']['PM2_PUBLIC_KEY']} #{instance['hostname']}" do
                     ignore_failure false
                     action :run
                     user "root"
                     cwd "#{current_release}"
+                    only_if { app['environment']['PM2_PUBLIC_KEY'] != nil && app['environment']['PM2_SECRET_KEY'] != nil }
                 end
 
                 execute "service nginx start | nginx -s reload" do
@@ -210,12 +231,11 @@ apps.each do |app|
                     user "root"
                 end
 
-                if current_port
-                    execute "pm2 stop app-#{current_port} | pm2 delete app-#{current_port}" do
-                        ignore_failure true
-                        action :run
-                        user "root"
-                    end
+                execute "pm2 startOrReload #{app_path}/ecosystem.config.js" do
+                    ignore_failure false
+                    action :run
+                    user "root"
+                    cwd "#{app_path}"
                 end
             else
                 execute "a2dismod mpm_event | service apache2 start | service apache2 graceful" do

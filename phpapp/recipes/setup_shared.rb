@@ -32,7 +32,12 @@ package "gearman-tools"
 package "gearman"
 package "libmysqlclient-dev"
 
-npm_package 'pm2'
+#npm_package 'pm2'
+
+execute "npm config set prefix /usr/local && npm install -g pm2" do
+    ignore_failure false
+    user "root"
+end
 
 bash 'install_extensions' do
   interpreter "bash"
