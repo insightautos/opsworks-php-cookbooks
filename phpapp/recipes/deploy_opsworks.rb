@@ -125,6 +125,9 @@ deploy "#{app_path}" do
             autorestart true
             numprocs 10
             environment supervisorEnvironmentVars
+            redirect_stderr true
+            stderr_logfile "./err.log"
+            stderr_events_enabled true
         end
         execute "a2dismod mpm_event | service apache2 restart" do
             ignore_failure false
