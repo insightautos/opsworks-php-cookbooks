@@ -1,15 +1,18 @@
 DEPENDENCIES
+  alb_support
+    path: alb_support
   apache2
   application_git
   apt
   ark
   bluepill
   build-essential
-  gearman
+  gearman (~> 0.0.1)
   imagemagick
   mysql
   newrelic
     path: newrelic_cookbook
+  nginx
   nodejs
   openssl
   php
@@ -21,7 +24,8 @@ DEPENDENCIES
   yum
 
 GRAPH
-  apache2 (5.0.1)
+  alb_support (0.0.0)
+  apache2 (5.2.1)
   application (5.2.0)
     poise (~> 2.4)
     poise-service (~> 1.0)
@@ -29,13 +33,13 @@ GRAPH
     application (~> 5.0)
     poise (~> 2.0)
     poise-git (~> 1.0)
-  apt (7.0.0)
+  apt (7.1.1)
   ark (4.0.0)
     build-essential (>= 0.0.0)
     seven_zip (>= 0.0.0)
-  bluepill (4.1.0)
+  bluepill (4.1.1)
     rsyslog (>= 2.0)
-  build-essential (8.1.1)
+  build-essential (8.2.1)
     mingw (>= 1.1)
     seven_zip (>= 0.0.0)
   gearman (0.0.1)
@@ -44,16 +48,16 @@ GRAPH
     seven_zip (>= 0.0.0)
   mysql (8.5.1)
   newrelic (1.2.0)
-  nginx (8.1.5)
+  nginx (8.1.6)
     build-essential (>= 5.0)
     ohai (>= 4.1.0)
     yum-epel (>= 0.0.0)
     zypper (>= 0.0.0)
-  nodejs (5.0.0)
+  nodejs (6.0.0)
     ark (>= 2.0.2)
-    build-essential (>= 0.0.0)
-  ohai (5.2.3)
-  openssl (8.5.0)
+    build-essential (>= 5.0)
+  ohai (5.2.5)
+  openssl (8.5.5)
   php (6.1.1)
     build-essential (>= 5.0)
     yum-epel (>= 0.0.0)
@@ -62,8 +66,9 @@ GRAPH
     application_git (>= 0.0.0)
     apt (>= 0.0.0)
     build-essential (>= 0.0.0)
-    gearman (>= 0.0.0)
+    gearman (~> 0.0.1)
     imagemagick (>= 0.0.0)
+    nginx (>= 0.0.0)
     nodejs (>= 0.0.0)
     php (>= 0.0.0)
     phpmyadmin (>= 0.0.0)
@@ -92,7 +97,7 @@ GRAPH
     windows (>= 0.0.0)
   supervisor (0.4.12)
     python (>= 0.0.0)
-  windows (5.0.0)
+  windows (5.1.3)
   yum (5.1.0)
-  yum-epel (3.2.0)
+  yum-epel (3.3.0)
   zypper (0.4.0)

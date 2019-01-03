@@ -6,12 +6,19 @@ include_recipe "phpapp::php_mcrypt_enable"
 include_recipe "imagemagick::devel"
 include_recipe "imagemagick"
 include_recipe 'apt::default'
+
+node.default['nodejs']['install_method'] = 'binary'
 include_recipe "nodejs"
 include_recipe "gearman::default"
 include_recipe "supervisor::default"
 
-node.set['apt']['unattended_upgrades']['enable'] = true
-node.set['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:${distro_codename}-security"]
+node.default['nginx']['port'] = 80
+node.default['nginx']['worker_shutdown_timeout'] = 10
+
+include_recipe "nginx::default"
+
+node.default['apt']['unattended_upgrades']['enable'] = true
+node.default['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:${distro_codename}-security"]
 
 include_recipe "apt::unattended-upgrades"
 
@@ -24,6 +31,13 @@ package "libzip-dev"
 package "gearman-tools"
 package "gearman"
 package "libmysqlclient-dev"
+
+#npm_package 'pm2'
+
+execute "npm config set prefix /usr/local && npm install -g pm2" do
+    ignore_failure false
+    user "root"
+end
 
 bash 'install_extensions' do
   interpreter "bash"
@@ -45,7 +59,7 @@ bash 'install_extensions' do
     if [ -z "$imagickinstalled" ]
     then
         printf "\n" | pecl install imagick
-    fi
+   fi
 
     zipinstalled="$(pecl list | grep -i zip)"
 
@@ -53,6 +67,14 @@ bash 'install_extensions' do
     then
         printf "\n" | pecl install zip
     fi
+
+    echo "extension=v8js.so" | tee /etc/php/7.2/mods-available/v8js.ini
+    echo "extension=imagick.so" | tee /etc/php/7.2/mods-available/imagick.ini
+    echo "extension=zip.so" | tee /etc/php/7.2/mods-available/zip.ini
+
+    echo "extension=v8js.so" | tee /etc/php/7.2/cli/conf.d/20-v8js.ini
+    echo "extension=imagick.so" | tee /etc/php/7.2/cli/conf.d/20-imagick.ini
+    echo "extension=zip.so" | tee /etc/php/7.2/cli/conf.d/20-zip.ini
 
     EOH
 end
@@ -62,7 +84,9 @@ bash 'install_gearman' do
   user 'root'
   code <<-EOH
 
-    gearmaninstalled="$(ls /etc/php/7.2/mods-available | grep -i gearman)"
+    extensiondir=$(php-config --extension-dir)
+
+    gearmaninstalled="$(ls $extensiondir | grep -i gearman)"
 
     if [ -z "$gearmaninstalled" ]
     then
@@ -74,9 +98,10 @@ bash 'install_gearman' do
         ./configure
         make
         make install
-        echo "extension=gearman.so" | tee /etc/php/7.2/mods-available/gearman.ini
-        phpenmod -v ALL -s ALL gearman
     fi
+
+    echo "extension=gearman.so" | tee /etc/php/7.2/mods-available/gearman.ini
+    phpenmod -v ALL -s ALL gearman
 
     EOH
 end

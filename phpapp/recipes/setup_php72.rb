@@ -1,18 +1,19 @@
-node.set['apache']['version'] = '2.4'
-node.set['apache']['package'] = 'apache2'
-node.set['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
+node.default['apache']['listen'] = ['*:8080']
+node.default['apache']['version'] = '2.4'
+node.default['apache']['package'] = 'apache2'
+node.default['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
 
-node.set['php']['fpm_package'] = 'php7.2-fpm'
-node.set['php']['fpm_pooldir'] = '/etc/php/7.2/fpm/pool.d'
-node.set['php']['fpm_service'] = 'php7.2-fpm'
-node.set['php']['fpm_socket'] = '/var/run/php/php7.2-fpm.sock'
-node.set['php']['fpm_default_conf'] = '/etc/php/7.2/fpm/pool.d/www.conf'
+node.default['php']['fpm_package'] = 'php7.2-fpm'
+node.default['php']['fpm_pooldir'] = '/etc/php/7.2/fpm/pool.d'
+node.default['php']['fpm_service'] = 'php7.2-fpm'
+node.default['php']['fpm_socket'] = '/var/run/php/php7.2-fpm.sock'
+node.default['php']['fpm_default_conf'] = '/etc/php/7.2/fpm/pool.d/www.conf'
 
-node.set['php']['mysql'] = 'php7.2-mysqlnd'
-node.set['php']['curl'] = 'php7.2-curl'
-node.set['php']['ext_conf_dir'] = '/etc/php/7.2/mods-available'
+node.default['php']['mysql'] = 'php7.2-mysqlnd'
+node.default['php']['curl'] = 'php7.2-curl'
+node.default['php']['ext_conf_dir'] = '/etc/php/7.2/mods-available'
 
-node.set['php']['conf_dir'] = "/etc/php/7.2"
+node.default['php']['conf_dir'] = "/etc/php/7.2"
 # add the EPEL repo
 #yum_repository 'epel' do
 #    description 'Extra Packages for Enterprise Linux'
@@ -46,14 +47,14 @@ fpm_process_size = 10
 s = shell_out("nproc --all")
 cpu_cores = s.stdout.to_i
 
-node.set['apache']['event']['serverlimit'] = (total_ram*0.85).round
-node.set['apache']['event']['startservers'] = cpu_cores
-node.set['apache']['event']['minsparethreads'] =  25
-node.set['apache']['event']['maxsparethreads'] = 75
-node.set['apache']['event']['threadlimit'] = 64
-node.set['apache']['event']['threadsperchild'] = 25
-node.set['apache']['event']['maxrequestworkers'] = ((total_ram*0.85)/apache_process_size).round
-node.set['apache']['event']['maxconnectionsperchild'] = 1000
+node.default['apache']['event']['serverlimit'] = (total_ram*0.85).round
+node.default['apache']['event']['startservers'] = cpu_cores
+node.default['apache']['event']['minsparethreads'] =  25
+node.default['apache']['event']['maxsparethreads'] = 75
+node.default['apache']['event']['threadlimit'] = 64
+node.default['apache']['event']['threadsperchild'] = 25
+node.default['apache']['event']['maxrequestworkers'] = ((total_ram*0.85)/apache_process_size).round
+node.default['apache']['event']['maxconnectionsperchild'] = 1000
 
 execute "LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php" do
     ignore_failure false

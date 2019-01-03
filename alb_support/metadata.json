@@ -1,0 +1,7 @@
+{
+  "name": "alb_support",
+  "recipes": {
+    "alb_support::attach_to_alb": "Attach ALB",
+    "alb_support::detach_to_alb": "Detach ALB"
+  }
+}

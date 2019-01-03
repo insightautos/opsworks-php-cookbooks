@@ -1,31 +1,49 @@
-<VirtualHost *:80>
+<VirtualHost *:8080>
    ServerName <%= @params[:server_name] %>
    ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
-   DocumentRoot <%= @params[:docroot] %>
 
-   <Directory <%= @params[:docroot] %>>
-     Options FollowSymLinks
-     AllowOverride All
-     Order allow,deny
-     Allow from all
-     Require all granted
-   </Directory>
+  <% if @params[:environment]['LANGUAGE'] == "nodejs" %>
 
-  <Directory />
-    Options FollowSymLinks
-    AllowOverride All
-  </Directory>
+      ProxyRequests off
 
-  <Location /server-status>
-    SetHandler server-status
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
 
-    Order Deny,Allow
-    Deny from all
-    Allow from 127.0.0.1
-  </Location>
+      <Location /> # no, this closing tag is not a typo
+        ProxyPass        http://localhost:<%= @params[:environment]['NODE_PORT'] %>
+        ProxyPassReverse http://localhost:<%= @params[:environment]['NODE_PORT'] %>
+      </Location>
 
-  <% @params[:environment].each do |key, value| %>
-    SetEnv "<%= key %>" "<%= value %>"
+  <% else %>
+
+       DocumentRoot <%= @params[:docroot] %>
+
+       <Directory <%= @params[:docroot] %>>
+         Options FollowSymLinks
+         AllowOverride All
+         Order allow,deny
+         Allow from all
+         Require all granted
+       </Directory>
+
+      <Directory />
+        Options FollowSymLinks
+        AllowOverride All
+      </Directory>
+
+      <Location /server-status>
+        SetHandler server-status
+
+        Order Deny,Allow
+        Deny from all
+        Allow from 127.0.0.1
+      </Location>
+      <% @params[:environment].each do |key, value| %>
+        SetEnv "<%= key %>" "<%= value %>"
+      <% end %>
+
   <% end %>
 
  </VirtualHost>
