@@ -1,7 +1,7 @@
-<VirtualHost *:8080>
+<VirtualHost *:<%= @params[:environment]['PORT'] %>>
    ServerName <%= @params[:server_name] %>
    ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
-
+   KeepAlive Off
   <% if @params[:environment]['LANGUAGE'] == "nodejs" %>
 
       ProxyRequests off

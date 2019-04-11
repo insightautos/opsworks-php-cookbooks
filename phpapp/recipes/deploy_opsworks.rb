@@ -1,3 +1,4 @@
+node.default['apache']['listen'] = ['*:8080']
 apps = search("aws_opsworks_app","deploy:true")
 instance = search("aws_opsworks_instance", "self:true").first
 require 'chef/mixin/shell_out'
@@ -58,7 +59,7 @@ apps.each do |app|
         Chef::Log.info("NodeJS app is using port #{current_port} right now. New deploy will use port #{port_to_use}.")
 
         template 'nginx-config' do
-            source 'nginx.conf.erb'
+            source 'nginx-site.conf.erb'
             path "#{node['nginx']['dir']}/sites-available/#{app['shortname']}"
             action :create
             variables ({ :environment => app['environment'], :domains => app['domains'], :port => port_to_use})
@@ -77,12 +78,15 @@ apps.each do |app|
 
         app['environment']['NODE_PORT'] = port_to_use
     else
+        node.default['apache']['listen'].push("*:#{app['environment']['PORT']}")
+
         bash 'disable_php7.2' do
           interpreter "bash"
           user 'root'
           code <<-EOH
             if hash a2dismod 2>/dev/null; then
                 a2dismod php7.2
+                a2dismod php7.3
                 a2dismod mpm_event
             fi
             EOH
@@ -129,10 +133,15 @@ apps.each do |app|
         end
 
         template 'nginx-config' do
-            source 'nginx.conf.erb'
+            source 'nginx-site.conf.erb'
             path "#{node['nginx']['dir']}/sites-available/#{app['shortname']}"
             action :create
-            variables ({ :environment => app['environment'], :domains => app['domains'], :port => 8080})
+            variables ({ :environment => app['environment'], :domains => app['domains'], :port => app['environment']['PORT']})
+        end
+        template 'nginx-stub_status-config' do
+            source 'nginx.stub_status.conf.erb'
+            path "#{node['nginx']['dir']}/conf.d/stub_status.conf"
+            action :create
         end
 
         execute "nxensite #{app['shortname']}" do
@@ -189,12 +198,12 @@ apps.each do |app|
                     autostart true
                     autorestart true
                     numprocs 1
+
                     user "root"
-                    redirect_stderr true
                     stdout_events_enabled true
                     stderr_events_enabled true
-                    redirect_stderr true
-                    stderr_logfile "./err.log"
+                    redirect_stderr false
+                    stderr_logfile "/var/log/supervisor/gearman.log"
                 end
 
                 supervisor_service "gearman_process" do
@@ -207,12 +216,19 @@ apps.each do |app|
                     environment supervisorEnvironmentVars
 
                     user "root"
-                    redirect_stderr true
                     stdout_events_enabled true
                     stderr_events_enabled true
-                    redirect_stderr true
-                    stderr_logfile "./err.log"
+                    redirect_stderr false
+                    stderr_logfile "/var/log/supervisor/gearman_process.log"
                 end
+            end
+
+            execute "service nginx stop && service nginx start" do
+                ignore_failure false
+                action :run
+                user "root"
+                cwd "#{current_release}"
+                not_if {::File.exist?("/var/run/nginx.pid")}
             end
 
             if app['environment']['LANGUAGE'] == "nodejs"
@@ -231,7 +247,7 @@ apps.each do |app|
                     only_if { app['environment']['PM2_PUBLIC_KEY'] != nil && app['environment']['PM2_SECRET_KEY'] != nil }
                 end
 
-                execute "service nginx start | nginx -s reload" do
+                execute "service nginx start && nginx -s reload" do
                     ignore_failure false
                     user "root"
                 end
@@ -243,9 +259,20 @@ apps.each do |app|
                     cwd "#{app_path}"
                 end
             else
+
                 execute "a2dismod mpm_event | service apache2 start | service apache2 graceful" do
                     ignore_failure false
                     user "root"
+                end
+                bash 'disable_php7.3' do
+                  interpreter "bash"
+                  user 'root'
+                  code <<-EOH
+                    if hash a2dismod 2>/dev/null; then
+                        a2dismod php7.3
+                        a2enmod php7.2
+                    fi
+                    EOH
                 end
 
                 execute "service nginx start | nginx -s reload" do

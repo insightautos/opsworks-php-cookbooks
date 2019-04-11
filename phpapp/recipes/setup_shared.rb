@@ -13,9 +13,12 @@ include_recipe "gearman::default"
 include_recipe "supervisor::default"
 
 node.default['nginx']['port'] = 80
+#node.default['nginx']['conf_template'] = 'nginx_main.conf.erb'
 node.default['nginx']['worker_shutdown_timeout'] = 10
+node.default['nginx']['pid'] = '/run/nginx.pid'
 
 include_recipe "nginx::default"
+resources('template[nginx.conf]').cookbook 'phpapp'
 
 node.default['apt']['unattended_upgrades']['enable'] = true
 node.default['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:${distro_codename}-security"]
@@ -26,7 +29,19 @@ package "git"
 package "python-setuptools"
 package "ntp"
 package "ntpdate"
-package "composer"
+
+bash 'install_composer' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+        php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+        php composer-setup.php
+        php -r "unlink('composer-setup.php');"
+        mv composer.phar /usr/local/bin/composer
+    EOH
+end
+
 package "libzip-dev"
 package "gearman-tools"
 package "gearman"
@@ -43,9 +58,9 @@ bash 'install_extensions' do
   interpreter "bash"
   user 'root'
   code <<-EOH
-    pecl config-set php_ini /etc/php/7.2/apache2/php.ini
+    #pecl config-set php_ini /etc/php/7.2/apache2/php.ini
 
-    pear config-set php_ini /etc/php/7.2/apache2/php.ini
+    #pear config-set php_ini /etc/php/7.2/apache2/php.ini
 
     v8installed="$(pecl list | grep -i v8js)"
 
@@ -75,6 +90,22 @@ bash 'install_extensions' do
     echo "extension=v8js.so" | tee /etc/php/7.2/cli/conf.d/20-v8js.ini
     echo "extension=imagick.so" | tee /etc/php/7.2/cli/conf.d/20-imagick.ini
     echo "extension=zip.so" | tee /etc/php/7.2/cli/conf.d/20-zip.ini
+
+    phpenmod -v ALL -s ALL v8js
+    phpenmod -v ALL -s ALL imagick
+    phpenmod -v ALL -s ALL zip
+    phpenmod -v ALL -s ALL pdo_pgsql
+
+    EOH
+end
+
+bash 'install_extensions' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    cd /tmp/
+    curl -L -O https://github.com/nginxinc/nginx-amplify-agent/raw/master/packages/install.sh
+    API_KEY="#{node['nginx_amplify']['api_key']}" sh ./install.sh
 
     EOH
 end
@@ -126,6 +157,17 @@ execute "easy_install supervisor"
 # disable opcache fast shutdown
 execute "sed -i 's/opcache.fast_shutdown=1/opcache.fast_shutdown=0/g' /etc/php/7.2/php.ini" do
     ignore_failure true
+end
+
+bash 'disable_php7.3' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    if hash a2dismod 2>/dev/null; then
+        a2dismod php7.3
+        a2enmod php7.2
+    fi
+    EOH
 end
 
 execute "composer global require hirak/prestissimo" do

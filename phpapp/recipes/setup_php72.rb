@@ -1,8 +1,9 @@
 node.default['apache']['listen'] = ['*:8080']
 node.default['apache']['version'] = '2.4'
 node.default['apache']['package'] = 'apache2'
-node.default['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
+node.default['php']['packages'] = ['libapache2-mod-php7.2', 'libapache2-mod-php','php7.2-dev', 'php7.2-common', 'php7.2-cli', 'php7.2-soap', 'php7.2-xml', 'php7.2-xmlrpc', 'php7.2-mysqlnd','php7.2-pgsql', 'php7.2-opcache', 'php7.2-pdo', 'php7.2-imap', 'php7.2-mbstring', 'php7.2-intl', 'php7.2-gd','php7.2','php-pear','php7.2-curl']
 
+node.default['php']['version'] =  '7.2.17'
 node.default['php']['fpm_package'] = 'php7.2-fpm'
 node.default['php']['fpm_pooldir'] = '/etc/php/7.2/fpm/pool.d'
 node.default['php']['fpm_service'] = 'php7.2-fpm'
@@ -10,6 +11,7 @@ node.default['php']['fpm_socket'] = '/var/run/php/php7.2-fpm.sock'
 node.default['php']['fpm_default_conf'] = '/etc/php/7.2/fpm/pool.d/www.conf'
 
 node.default['php']['mysql'] = 'php7.2-mysqlnd'
+node.default['php']['pgsql'] = 'php7.2-pgsql'
 node.default['php']['curl'] = 'php7.2-curl'
 node.default['php']['ext_conf_dir'] = '/etc/php/7.2/mods-available'
 
@@ -41,8 +43,8 @@ when 'windows', 'solaris', 'hpux', 'aix'
   node.memory.total[/\d*/].to_i / 1024
 end
 
-apache_process_size = 15
-fpm_process_size = 10
+apache_process_size = 5
+fpm_process_size = 5
 
 s = shell_out("nproc --all")
 cpu_cores = s.stdout.to_i
@@ -54,7 +56,13 @@ node.default['apache']['event']['maxsparethreads'] = 75
 node.default['apache']['event']['threadlimit'] = 64
 node.default['apache']['event']['threadsperchild'] = 25
 node.default['apache']['event']['maxrequestworkers'] = ((total_ram*0.85)/apache_process_size).round
-node.default['apache']['event']['maxconnectionsperchild'] = 1000
+node.default['apache']['event']['maxconnectionsperchild'] = 5000
+
+node.default['apache']['prefork']['maxconnectionsperchild'] = 2500
+node.default['apache']['prefork']['maxrequestworkers'] = 1500
+node.default['apache']['prefork']['minspareservers'] =  25
+node.default['apache']['prefork']['maxspareservers'] = 75
+node.default['apache']['prefork']['serverlimit'] = 64
 
 execute "LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php" do
     ignore_failure false
@@ -71,6 +79,7 @@ bash 'disable_php7.2' do
   code <<-EOH
     if hash a2dismod 2>/dev/null; then
         a2dismod php7.2
+        a2dismod php7.3
         a2dismod mpm_event
     fi
     EOH
@@ -85,7 +94,12 @@ include_recipe "apache2::mod_proxy_http"
 include_recipe "apache2::mpm_event"
 include_recipe "php"
 
-addconfig = {:max_requests => 1000}
+execute "apt-get remove -y --purge php7.3*" do
+    ignore_failure false
+    user "root"
+end
+
+addconfig = {:max_requests => 5000}
 
 php_fpm_pool 'default' do
   action :install
@@ -96,6 +110,18 @@ php_fpm_pool 'default' do
 end
 
 execute "a2enmod php7.2" do
+    ignore_failure true
+    user "root"
+end
+
+template 'apache2-prefork' do
+    source 'mpm_prefork.conf.erb'
+    path "/etc/apache2/conf-available/dealr_mpm_prefork.conf"
+    action :create
+    variables ({ :node => node })
+end
+
+execute "a2enconf dealr_mpm_prefork" do
     ignore_failure true
     user "root"
 end
