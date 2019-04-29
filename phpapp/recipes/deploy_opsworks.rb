@@ -221,6 +221,22 @@ apps.each do |app|
                     redirect_stderr false
                     stderr_logfile "/var/log/supervisor/gearman_process.log"
                 end
+
+                supervisor_service "gearman_process_2" do
+                    action [:enable, :restart]
+                    process_name "gearman-worker-2-%(process_num)s"
+                    command "php #{current_release}/api/gearman/worker.php worker-2"
+                    autostart true
+                    autorestart true
+                    numprocs 5
+                    environment supervisorEnvironmentVars
+
+                    user "root"
+                    stdout_events_enabled true
+                    stderr_events_enabled true
+                    redirect_stderr false
+                    stderr_logfile "/var/log/supervisor/gearman_process_2.log"
+                end
             end
 
             execute "service nginx stop && service nginx start" do
