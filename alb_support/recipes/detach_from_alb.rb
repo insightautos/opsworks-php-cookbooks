@@ -33,18 +33,20 @@ ruby_block "detach from ALB" do
 
     stack_region = stack[:region]
     ec2_instance_id = instance[:ec2_instance_id]
-    target_group_arn = node[:alb_helper][:target_group_arn]
+    target_group_arn = node[:alb_helper][:target_group_arn].split(",")
 
     Chef::Log.info("Creating ELB client in region #{stack_region}")
     client = Aws::ElasticLoadBalancingV2::Client.new(region: stack_region)
 
-    target_to_detach = {
-      target_group_arn: target_group_arn,
-      targets: [ { id: ec2_instance_id } ],
-    }
+    target_group_arn.each do |target|
+        target_to_attach = {
+          target_group_arn: target,
+          targets: [{ id: ec2_instance_id }]
+        }
 
-    Chef::Log.info("Deregistering EC2 instance #{ec2_instance_id} from Target Group #{target_group_arn}")
-    client.deregister_targets(target_to_detach)
+        Chef::Log.info("Deregistering EC2 instance #{ec2_instance_id} from Target Group #{target}")
+        client.deregister_targets(target_to_attach)
+    end
 
     if connection_draining_timeout == 0
       Chef::Log.info("connection_draining_timeout was set to 0 seconds. execution of shutdown recipes will not be delayed")

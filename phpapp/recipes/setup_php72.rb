@@ -80,6 +80,7 @@ bash 'disable_php7.2' do
     if hash a2dismod 2>/dev/null; then
         a2dismod php7.2
         a2dismod php7.3
+        a2dismod php7.4
         a2dismod mpm_event
     fi
     EOH
@@ -95,6 +96,11 @@ include_recipe "apache2::mpm_event"
 include_recipe "php"
 
 execute "apt-get remove -y --purge php7.3*" do
+    ignore_failure false
+    user "root"
+end
+
+execute "apt-get remove -y --purge php7.4*" do
     ignore_failure false
     user "root"
 end

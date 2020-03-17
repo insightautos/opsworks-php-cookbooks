@@ -1,4 +1,11 @@
 node.default['apache']['listen'] = ['*:8080']
+node.default['nginx']['port'] = 80
+#node.default['nginx']['conf_template'] = 'nginx_main.conf.erb'
+node.default['nginx']['worker_shutdown_timeout'] = 10
+node.default['nginx']['pid'] = '/run/nginx.pid'
+node.default['nginx']['default_site_enabled'] = false
+
+
 apps = search("aws_opsworks_app","deploy:true")
 instance = search("aws_opsworks_instance", "self:true").first
 require 'chef/mixin/shell_out'
@@ -87,6 +94,7 @@ apps.each do |app|
             if hash a2dismod 2>/dev/null; then
                 a2dismod php7.2
                 a2dismod php7.3
+                a2dismod php7.4
                 a2dismod mpm_event
             fi
             EOH
@@ -137,6 +145,15 @@ apps.each do |app|
             path "#{node['nginx']['dir']}/sites-available/#{app['shortname']}"
             action :create
             variables ({ :environment => app['environment'], :domains => app['domains'], :port => app['environment']['PORT']})
+        end
+        template "nginx.conf" do
+          path "#{node['nginx']['dir']}/nginx.conf"
+          source "nginx.conf.erb"
+          owner "root"
+          group "root"
+          mode 00644
+          variables ({ :environment => app['environment'], :domains => app['domains'], :port => port_to_use})
+          ignore_failure true
         end
         template 'nginx-stub_status-config' do
             source 'nginx.stub_status.conf.erb'
@@ -286,6 +303,7 @@ apps.each do |app|
                   code <<-EOH
                     if hash a2dismod 2>/dev/null; then
                         a2dismod php7.3
+                        a2dismod php7.4
                         a2enmod php7.2
                     fi
                     EOH

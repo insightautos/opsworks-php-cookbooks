@@ -14,12 +14,15 @@
     "apache2": ">= 0.0.0",
     "nginx": ">= 0.0.0",
     "php": ">= 0.0.0",
+    "mysql": ">= 0.0.0",
     "phpmyadmin": ">= 0.0.0",
     "application_git": ">= 0.0.0",
     "imagemagick": ">= 0.0.0",
     "nodejs": ">= 0.0.0",
     "gearman": "~> 0.0.1",
-    "supervisor": ">= 0.0.0"
+    "supervisor": ">= 0.0.0",
+    "openresty": "~> 0.6.2",
+    "mysql_connector": "~> 0.8.1"
   },
   "recommendations": {
   },

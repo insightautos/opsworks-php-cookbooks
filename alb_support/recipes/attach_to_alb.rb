@@ -32,19 +32,21 @@ ruby_block "attach to ALB" do
 
     stack_region = stack[:region]
     ec2_instance_id = instance[:ec2_instance_id]
-    target_group_arn = node[:alb_helper][:target_group_arn]
+    target_group_arn = node[:alb_helper][:target_group_arn].split(",")
 
     Chef::Log.info("Creating ELB client in region #{stack_region}")
     client = Aws::ElasticLoadBalancingV2::Client.new(region: stack_region)
 
-    Chef::Log.info("Registering EC2 instance #{ec2_instance_id} with target group #{target_group_arn}")
 
-    target_to_attach = {
-      target_group_arn: target_group_arn,
-      targets: [{ id: ec2_instance_id }]
-    }
+    target_group_arn.each do |target|
+        target_to_attach = {
+          target_group_arn: target,
+          targets: [{ id: ec2_instance_id }]
+        }
 
-    client.register_targets(target_to_attach)
+        Chef::Log.info("Registering EC2 instance #{ec2_instance_id} with target group #{target}")
+       client.register_targets(target_to_attach)
+    end
   end
   action :run
 end

@@ -6,6 +6,11 @@ include_recipe "phpapp::php_mcrypt_enable"
 include_recipe "imagemagick::devel"
 include_recipe "imagemagick"
 include_recipe 'apt::default'
+include_recipe 'openresty::default'
+include_recipe 'openresty::luarocks'
+package "python-pip"
+#node.default['poise-python']['install_python2'] = true
+#include_recipe 'poise-python::default'
 
 node.default['nodejs']['install_method'] = 'binary'
 include_recipe "nodejs"
@@ -16,6 +21,13 @@ node.default['nginx']['port'] = 80
 #node.default['nginx']['conf_template'] = 'nginx_main.conf.erb'
 node.default['nginx']['worker_shutdown_timeout'] = 10
 node.default['nginx']['pid'] = '/run/nginx.pid'
+node.default['nginx']['default_site_enabled'] = false
+
+file "/etc/apt/apt.conf" do
+    owner 'root'
+    mode "0755"
+    content 'DPkg::options { "--force-confnew"; };'
+end
 
 include_recipe "nginx::default"
 resources('template[nginx.conf]').cookbook 'phpapp'
@@ -26,7 +38,7 @@ node.default['apt']['unattended_upgrades']['allowed_origins'] = ["${distro_id}:$
 include_recipe "apt::unattended-upgrades"
 
 package "git"
-package "python-setuptools"
+#package "python-setuptools"
 package "ntp"
 package "ntpdate"
 
@@ -66,6 +78,11 @@ execute "npm config set prefix /usr/local && npm install -g pm2" do
     ignore_failure false
     user "root"
 end
+
+#execute "curl -sL https://sentry.io/get-cli/ | bash" do
+#    ignore_failure false
+#    user "root"
+#end
 
 bash 'install_extensions' do
   interpreter "bash"
@@ -115,6 +132,7 @@ end
 bash 'install_extensions' do
   interpreter "bash"
   user 'root'
+  only_if {node['nginx_amplify']['api_key'] != ''}
   code <<-EOH
     cd /tmp/
     curl -L -O https://github.com/nginxinc/nginx-amplify-agent/raw/master/packages/install.sh
@@ -178,6 +196,7 @@ bash 'disable_php7.3' do
   code <<-EOH
     if hash a2dismod 2>/dev/null; then
         a2dismod php7.3
+        a2dismod php7.4
         a2enmod php7.2
     fi
     EOH
@@ -186,4 +205,42 @@ end
 execute "composer global require hirak/prestissimo" do
     ignore_failure true
 end
+
+mysql_client 'default' do
+  action :create
+end
+
+package "luarocks"
+
+openresty_luarock 'lua-resty-auto-ssl' do
+  action :install
+end
+#openresty_luarock 'luasql-mysql' do
+#  action :install
+#end
+
+execute "luarocks install luasql-mysql MYSQL_INCDIR=/usr/include/mysql" do
+    ignore_failure true
+end
+
+bash 'setup-lua-ssl' do
+  interpreter "bash"
+  user 'root'
+  ignore_failure true
+  code <<-EOH
+    mkdir /etc/resty-auto-ssl
+    chown www-data /etc/resty-auto-ssl
+    EOH
+end
+bash 'setup-default-ssl' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
+       -subj '/CN=sni-support-required-for-valid-ssl' \
+       -keyout /etc/ssl/resty-auto-ssl-fallback.key \
+       -out /etc/ssl/resty-auto-ssl-fallback.crt
+    EOH
+end
+
 include_recipe "phpapp::setup_php72"

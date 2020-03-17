@@ -1,6 +1,10 @@
 <VirtualHost *:<%= @params[:environment]['PORT'] %>>
    ServerName <%= @params[:server_name] %>
-   ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
+   <% if @params[:environment]['CATCHALL_HOSTS'] %>
+   ServerAlias *
+   <% else %>
+    ServerAlias <% @params[:server_aliases].each do |a| %><%= "#{a}" %> <% end %>
+   <% end %>
    KeepAlive Off
   <% if @params[:environment]['LANGUAGE'] == "nodejs" %>
 
