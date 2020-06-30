@@ -168,6 +168,37 @@ bash 'install_gearman' do
     EOH
 end
 
+bash 'install_sass' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+
+    extensiondir=$(php-config --extension-dir)
+
+    sassinstalled="$(ls $extensiondir | grep -i sass)"
+
+    if [ -z "$sassinstalled" ]
+    then
+        echo "install"
+        cd /tmp/
+        rm -rf sassphp
+        git clone git://github.com/forrestmid/sassphp
+        cd sassphp
+        git submodule init
+        git submodule update
+        cd lib && make -C libsass -j5 && cd ..
+        phpize
+        ./configure
+        make
+        make install
+    fi
+
+    echo "extension=sass.so" | tee /etc/php/7.2/mods-available/sass.ini
+    phpenmod -v ALL -s ALL sass
+
+    EOH
+end
+
 #execute "printf \"/opt/v8\n\" | pecl install v8js" do
 #    ignore_failure false
 #    user "root"
