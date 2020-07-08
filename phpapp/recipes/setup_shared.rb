@@ -8,9 +8,23 @@ include_recipe "imagemagick"
 include_recipe 'apt::default'
 include_recipe 'openresty::default'
 include_recipe 'openresty::luarocks'
+node.default['python']['install_method'] = 'source'
+#node.default['python']['prefix_dir'] = '/usr/local'
 package "python-pip"
 #node.default['poise-python']['install_python2'] = true
 #include_recipe 'poise-python::default'
+
+bash 'pip_link' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+        #!/bin/sh
+
+        rm -f /usr/bin/pip
+        ln -s /usr/local/bin/pip /usr/bin/pip
+
+    EOH
+end
 
 node.default['nodejs']['install_method'] = 'binary'
 include_recipe "nodejs"

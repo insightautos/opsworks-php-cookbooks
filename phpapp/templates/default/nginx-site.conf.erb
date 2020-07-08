@@ -7,7 +7,7 @@ server {
     <% end %>
 
     location / {
-        <% if defined?@environment['AUTO_SSL'] && @environment['AUTO_SSL'] %>
+        <% if @environment['AUTO_SSL'] %>
         return 301 https://$host$request_uri;
         <% end %>
 
@@ -27,7 +27,7 @@ server {
         keepalive_timeout 0;
     }
 
-    <% if defined?@environment['AUTO_SSL'] && @environment['AUTO_SSL'] %>
+    <% if @environment['AUTO_SSL'] %>
     # Endpoint used for performing domain verification with Let's Encrypt.
     location /.well-known/acme-challenge/ {
       content_by_lua_block {
@@ -38,7 +38,7 @@ server {
     <% end %>
 }
 
-<% if defined?@environment['AUTO_SSL'] && @environment['AUTO_SSL'] %>
+<% if @environment['AUTO_SSL'] %>
 server {
   listen 443 ssl;
 

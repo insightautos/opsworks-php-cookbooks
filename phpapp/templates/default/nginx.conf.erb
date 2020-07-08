@@ -30,7 +30,7 @@ http {
   <% if node['nginx']['server_tokens'] -%>
   server_tokens <%= node['nginx']['server_tokens'] %>;
   <% end -%>
-  <% if (defined?@environment) && @environment['AUTO_SSL'] %>
+  <% if @environment && @environment['AUTO_SSL'] %>
 
   lua_shared_dict auto_ssl 50m;
   lua_shared_dict auto_ssl_settings 1m;
@@ -44,7 +44,7 @@ http {
     })
 
     auto_ssl:set("allow_domain", function(domain)
-        <% if defined?@environment %>
+        <% if @environment %>
         local env = driver.mysql()
         local normalizedDomain = domain:match("[%w%.]*%.(%w+%.%w+)")
         local con = env:connect("<%= @environment['CMS_PROD_DATABASE_TABLE'] %>", "<%= @environment['CMS_PROD_DATABASE_USER'] %>", "<%= @environment['CMS_PROD_DATABASE_PASS'] %>", "<%= @environment['CMS_PROD_DATABASE_SERVER'] %>")
