@@ -182,6 +182,25 @@ bash 'install_gearman' do
     EOH
 end
 
+bash 'install_ghostscript' do
+  interpreter "bash"
+  user 'root'
+  code <<-EOH
+    ghostscript_installed=$(gs -v | grep -i 9.52)
+
+    if [ -z "$ghostscript_installed" ]
+    then
+        cd /tmp/
+        wget https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs952/ghostscript-9.52-linux-x86_64.tgz
+        tar xvf ghostscript-9.52-linux-x86_64.tgz
+        cd ghostscript-9.52-linux-x86_64
+        mv gs-952-linux-x86_64 /usr/bin/gs
+        rm -rf ../ghostscript-9.52-linux-x86_64.tgz
+    fi
+
+    EOH
+end
+
 bash 'install_sass' do
   interpreter "bash"
   user 'root'
