@@ -95,6 +95,7 @@ apps.each do |app|
                 a2dismod php7.2
                 a2dismod php7.3
                 a2dismod php7.4
+                a2dismod php8.0
                 a2dismod mpm_event
             fi
             EOH
@@ -304,6 +305,7 @@ apps.each do |app|
                     if hash a2dismod 2>/dev/null; then
                         a2dismod php7.3
                         a2dismod php7.4
+                        a2dismod php8.0
                         a2enmod php7.2
                     fi
                     EOH

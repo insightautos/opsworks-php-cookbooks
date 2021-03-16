@@ -46,14 +46,17 @@ http {
     auto_ssl:set("allow_domain", function(domain)
         <% if defined?@environment %>
         local env = driver.mysql()
-        local normalizedDomain = domain:match("[%w%.]*%.(%w+%.%w+)")
+        local normalizedDomain = ('.'..domain):gsub("-", "HYPHENREPLACEMENT"):match("[%w%.]*%.(%w+%.%w+)"):gsub( "HYPHENREPLACEMENT", "-")
         local con = env:connect("<%= @environment['CMS_PROD_DATABASE_TABLE'] %>", "<%= @environment['CMS_PROD_DATABASE_USER'] %>", "<%= @environment['CMS_PROD_DATABASE_PASS'] %>", "<%= @environment['CMS_PROD_DATABASE_SERVER'] %>")
-        local cursor,errorString = con:execute(string.format([[SELECT host AS domain FROM cms_prod.websites WHERE production = 1 AND host LIKE '%%%s';]], normalizedDomain))
+
+        local mysqlQuery = string.format([[SELECT host AS domain FROM cms_prod.websites WHERE production = 1 AND host LIKE '%%%s';]], normalizedDomain)
+        local cursor,errorString = con:execute(mysqlQuery)
+
         local row = cursor:fetch ({}, "a")
         local allow_domain = false
         while row do
             local rowDomain = row.domain
-            local databaseDomain = rowDomain:match("[%w%.]*%.(%w+%.%w+)")
+            local databaseDomain = ('.'..rowDomain):gsub("-", "HYPHENREPLACEMENT"):match("[%w%.]*%.(%w+%.%w+)"):gsub( "HYPHENREPLACEMENT", "-")
             if normalizedDomain == databaseDomain then
                 allow_domain = true
             end

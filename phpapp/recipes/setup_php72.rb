@@ -81,6 +81,7 @@ bash 'disable_php7.2' do
         a2dismod php7.2
         a2dismod php7.3
         a2dismod php7.4
+        a2dismod php8.0
         a2dismod mpm_event
     fi
     EOH
@@ -101,6 +102,11 @@ execute "apt-get remove -y --purge php7.3*" do
 end
 
 execute "apt-get remove -y --purge php7.4*" do
+    ignore_failure false
+    user "root"
+end
+
+execute "apt-get remove -y --purge php8.0*" do
     ignore_failure false
     user "root"
 end
